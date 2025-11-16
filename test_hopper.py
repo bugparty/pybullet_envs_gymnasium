@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""测试 HopperBulletEnv-v0 环境是否可用"""
+"""Test HopperBulletEnv-v0 environment functionality"""
 
 import sys
 import traceback
@@ -8,42 +8,42 @@ import gymnasium as gym
 import pybullet_envs_gymnasium
 
 def test_hopper_env():
-    """测试 Hopper 环境的基本功能"""
+    """Test basic functionality of Hopper environment"""
 
     print("=" * 60)
-    print("测试 HopperBulletEnv-v0 环境")
+    print("Testing HopperBulletEnv-v0 Environment")
     print("=" * 60)
 
     try:
-        # 1. 测试环境创建
-        print("\n[1/5] 创建环境...")
+        # 1. Test environment creation
+        print("\n[1/5] Creating environment...")
         env = gym.make("HopperBulletEnv-v0")
-        print("✓ 环境创建成功")
-        print(f"  - 动作空间: {env.action_space}")
-        print(f"  - 观测空间: {env.observation_space}")
+        print("✓ Environment created successfully")
+        print(f"  - Action space: {env.action_space}")
+        print(f"  - Observation space: {env.observation_space}")
 
-        # 2. 测试环境重置
-        print("\n[2/5] 重置环境...")
+        # 2. Test environment reset
+        print("\n[2/5] Resetting environment...")
         obs, info = env.reset(seed=42)
-        print("✓ 环境重置成功")
-        print(f"  - 观测维度: {obs.shape}")
-        print(f"  - 观测值范围: [{obs.min():.3f}, {obs.max():.3f}]")
+        print("✓ Environment reset successfully")
+        print(f"  - Observation shape: {obs.shape}")
+        print(f"  - Observation range: [{obs.min():.3f}, {obs.max():.3f}]")
         print(f"  - Info: {info}")
 
-        # 3. 测试随机动作
-        print("\n[3/5] 测试随机动作...")
+        # 3. Test random action
+        print("\n[3/5] Testing random action...")
         action = env.action_space.sample()
-        print(f"  - 随机动作: {action}")
+        print(f"  - Random action: {action}")
 
         obs, reward, terminated, truncated, info = env.step(action)
-        print("✓ 步进成功")
-        print(f"  - 奖励: {reward:.3f}")
+        print("✓ Step executed successfully")
+        print(f"  - Reward: {reward:.3f}")
         print(f"  - terminated: {terminated}")
         print(f"  - truncated: {truncated}")
-        print(f"  - 新观测维度: {obs.shape}")
+        print(f"  - New observation shape: {obs.shape}")
 
-        # 4. 运行多个步骤
-        print("\n[4/5] 运行 100 步测试...")
+        # 4. Run multiple steps
+        print("\n[4/5] Running 100-step test...")
         total_reward = 0
         steps = 0
 
@@ -54,94 +54,94 @@ def test_hopper_env():
             steps += 1
 
             if terminated or truncated:
-                print(f"  - 第 {steps} 步结束 (terminated={terminated}, truncated={truncated})")
+                print(f"  - Episode ended at step {steps} (terminated={terminated}, truncated={truncated})")
                 obs, info = env.reset()
                 total_reward = 0
                 steps = 0
 
-        print(f"✓ 完成 100 步测试")
-        print(f"  - 最终累计奖励: {total_reward:.3f}")
-        print(f"  - 最终步数: {steps}")
+        print(f"✓ Completed 100-step test")
+        print(f"  - Final cumulative reward: {total_reward:.3f}")
+        print(f"  - Final step count: {steps}")
 
-        # 5. 测试环境关闭
-        print("\n[5/5] 关闭环境...")
+        # 5. Test environment close
+        print("\n[5/5] Closing environment...")
         env.close()
-        print("✓ 环境关闭成功")
+        print("✓ Environment closed successfully")
 
         print("\n" + "=" * 60)
-        print("测试结果: ✓ 所有测试通过")
-        print("HopperBulletEnv-v0 环境完全可用!")
+        print("Test Result: ✓ All tests passed")
+        print("HopperBulletEnv-v0 is fully functional!")
         print("=" * 60)
 
         return True
 
     except Exception as e:
         print("\n" + "=" * 60)
-        print("测试结果: ✗ 测试失败")
+        print("Test Result: ✗ Test failed")
         print("=" * 60)
-        print(f"\n错误类型: {type(e).__name__}")
-        print(f"错误信息: {str(e)}")
-        print("\n详细错误栈:")
+        print(f"\nError type: {type(e).__name__}")
+        print(f"Error message: {str(e)}")
+        print("\nDetailed traceback:")
         traceback.print_exc()
         print("=" * 60)
         return False
 
 def test_env_checker():
-    """使用 Gymnasium 的环境检查器验证环境"""
+    """Verify environment using Gymnasium's env checker"""
 
     print("\n" + "=" * 60)
-    print("使用 Gymnasium 环境检查器验证")
+    print("Verifying with Gymnasium Environment Checker")
     print("=" * 60)
 
     try:
         from gymnasium.utils.env_checker import check_env
 
         env = gym.make("HopperBulletEnv-v0")
-        print("\n运行环境检查...")
+        print("\nRunning environment check...")
         check_env(env, skip_render_check=True)
-        print("✓ 环境通过 Gymnasium 检查器验证")
+        print("✓ Environment passed Gymnasium checker validation")
         env.close()
         return True
 
     except Exception as e:
-        print(f"\n✗ 环境检查失败: {type(e).__name__}: {str(e)}")
+        print(f"\n✗ Environment check failed: {type(e).__name__}: {str(e)}")
         traceback.print_exc()
         return False
 
 def show_env_info():
-    """显示环境的详细信息"""
+    """Display detailed environment information"""
 
     print("\n" + "=" * 60)
-    print("HopperBulletEnv-v0 详细信息")
+    print("HopperBulletEnv-v0 Detailed Information")
     print("=" * 60)
 
     try:
-        # 从注册表获取环境信息
+        # Get environment info from registry
         spec = gym.spec("HopperBulletEnv-v0")
-        print(f"\n环境ID: {spec.id}")
-        print(f"入口点: {spec.entry_point}")
-        print(f"最大步数: {spec.max_episode_steps}")
-        print(f"奖励阈值: {spec.reward_threshold}")
+        print(f"\nEnvironment ID: {spec.id}")
+        print(f"Entry point: {spec.entry_point}")
+        print(f"Max episode steps: {spec.max_episode_steps}")
+        print(f"Reward threshold: {spec.reward_threshold}")
 
-        # 创建环境获取空间信息
+        # Create environment to get space info
         env = gym.make("HopperBulletEnv-v0")
-        print(f"\n动作空间: {env.action_space}")
-        print(f"  - 形状: {env.action_space.shape}")
-        print(f"  - 最小值: {env.action_space.low}")
-        print(f"  - 最大值: {env.action_space.high}")
+        print(f"\nAction space: {env.action_space}")
+        print(f"  - Shape: {env.action_space.shape}")
+        print(f"  - Low: {env.action_space.low}")
+        print(f"  - High: {env.action_space.high}")
 
-        print(f"\n观测空间: {env.observation_space}")
-        print(f"  - 形状: {env.observation_space.shape}")
-        print(f"  - 最小值: {env.observation_space.low[:5]}... (前5个)")
-        print(f"  - 最大值: {env.observation_space.high[:5]}... (前5个)")
+        print(f"\nObservation space: {env.observation_space}")
+        print(f"  - Shape: {env.observation_space.shape}")
+        print(f"  - Low: {env.observation_space.low[:5]}... (first 5)")
+        print(f"  - High: {env.observation_space.high[:5]}... (first 5)")
 
-        print(f"\n渲染模式: {env.metadata.get('render_modes', [])}")
-        print(f"渲染FPS: {env.metadata.get('render_fps', 'N/A')}")
+        print(f"\nRender modes: {env.metadata.get('render_modes', [])}")
+        print(f"Render FPS: {env.metadata.get('render_fps', 'N/A')}")
 
         env.close()
 
     except Exception as e:
-        print(f"\n获取环境信息失败: {e}")
+        print(f"\nFailed to get environment info: {e}")
 
 if __name__ == "__main__":
     show_env_info()
@@ -150,14 +150,14 @@ if __name__ == "__main__":
     test2_passed = test_env_checker()
 
     print("\n" + "=" * 60)
-    print("最终测试报告")
+    print("Final Test Report")
     print("=" * 60)
-    print(f"基本功能测试: {'✓ 通过' if test1_passed else '✗ 失败'}")
-    print(f"环境检查器测试: {'✓ 通过' if test2_passed else '✗ 失败'}")
+    print(f"Basic functionality test: {'✓ Passed' if test1_passed else '✗ Failed'}")
+    print(f"Environment checker test: {'✓ Passed' if test2_passed else '✗ Failed'}")
 
     if test1_passed and test2_passed:
-        print("\n结论: HopperBulletEnv-v0 完全可用! ✓")
+        print("\nConclusion: HopperBulletEnv-v0 is fully functional! ✓")
         sys.exit(0)
     else:
-        print("\n结论: HopperBulletEnv-v0 存在问题! ✗")
+        print("\nConclusion: HopperBulletEnv-v0 has issues! ✗")
         sys.exit(1)
