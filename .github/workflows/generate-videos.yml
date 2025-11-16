@@ -1,0 +1,71 @@
+name: Generate Demo Videos
+
+on:
+  workflow_dispatch:  # Manual trigger
+    inputs:
+      duration:
+        description: 'Video duration in seconds'
+        required: false
+        default: '10'
+      fps:
+        description: 'Frames per second'
+        required: false
+        default: '30'
+  push:
+    branches: [master]
+    paths:
+      - 'pybullet_envs_gymnasium/**'
+      - 'record_video.py'
+
+jobs:
+  record-videos:
+    name: Record Environment Videos
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install imageio imageio-ffmpeg
+
+    - name: Record HopperBulletEnv-v0 videos
+      run: |
+        python record_video.py
+
+    - name: List generated videos
+      run: |
+        ls -lh *.mp4
+        echo "Video details:"
+        for video in *.mp4; do
+          echo "  - $video: $(du -h $video | cut -f1)"
+        done
+
+    - name: Upload videos as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: hopper-demo-videos
+        path: |
+          *.mp4
+        retention-days: 90
+
+    - name: Generate video summary
+      run: |
+        echo "## Demo Videos Generated" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "The following videos were successfully recorded:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        for video in *.mp4; do
+          size=$(du -h "$video" | cut -f1)
+          echo "- \`$video\` ($size)" >> $GITHUB_STEP_SUMMARY
+        done
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Videos are available in the workflow artifacts for 90 days." >> $GITHUB_STEP_SUMMARY

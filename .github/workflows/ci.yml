@@ -53,3 +53,23 @@ jobs:
       - name: Test with pytest
         run: |
           make pytest
+      - name: Test HopperBulletEnv-v0 functionality
+        run: |
+          python test_hopper.py
+      - name: Test AsyncVectorEnv compatibility
+        run: |
+          python test_async_env.py
+      - name: Run diagnostic tests
+        run: |
+          python diagnose_hopper.py
+      - name: Record demo video
+        if: matrix.python-version == '3.11'
+        run: |
+          python record_video.py
+      - name: Upload demo video
+        if: matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hopper-demo-video
+          path: hopper_random_policy.mp4
+          retention-days: 30

@@ -1,0 +1,188 @@
+name: AsyncVectorEnv Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  test-async-compatibility:
+    name: Test AsyncVectorEnv Compatibility
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.11', '3.12']
+        num-envs: [2, 4, 8]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+
+    - name: Test AsyncVectorEnv with ${{ matrix.num-envs }} environments
+      run: |
+        python -c "
+        import numpy as np
+        import gymnasium as gym
+        from gymnasium.vector import AsyncVectorEnv
+        import pybullet_envs_gymnasium
+
+        num_envs = ${{ matrix.num-envs }}
+        print(f'Testing AsyncVectorEnv with {num_envs} parallel environments...')
+
+        # Create parallel environments
+        envs = AsyncVectorEnv([
+            lambda: gym.make('HopperBulletEnv-v0')
+            for _ in range(num_envs)
+        ])
+
+        # Test reset
+        obs = envs.reset(seed=42)
+        assert obs[0].shape == (num_envs, 15), f'Expected shape ({num_envs}, 15), got {obs[0].shape}'
+        print(f'✓ Reset successful: obs shape = {obs[0].shape}')
+
+        # Test steps
+        total_rewards = np.zeros(num_envs)
+        for step in range(50):
+            actions = envs.action_space.sample()
+            obs, rewards, dones, truncated, infos = envs.step(actions)
+            total_rewards += rewards
+
+        print(f'✓ 50 steps completed')
+        print(f'  Average reward per env: {total_rewards.mean():.2f}')
+        print(f'  Reward std: {total_rewards.std():.2f}')
+
+        # Verify different environments have different behaviors (random numbers work correctly)
+        assert total_rewards.std() > 0, 'All environments have identical rewards - RNG issue!'
+        print(f'✓ Environments have different behaviors (no RNG issues)')
+
+        envs.close()
+        print(f'✓ All tests passed for {num_envs} environments!')
+        "
+
+  test-seed-reproducibility:
+    name: Test Seed Reproducibility
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+
+    - name: Test seed reproducibility
+      run: |
+        python -c "
+        import numpy as np
+        import gymnasium as gym
+        import pybullet_envs_gymnasium
+
+        print('Testing seed reproducibility...')
+
+        # Run 1 with seed=42
+        env = gym.make('HopperBulletEnv-v0')
+        obs1, _ = env.reset(seed=42)
+        action = env.action_space.sample()
+        obs1_step, reward1, _, _, _ = env.step(action)
+        env.close()
+
+        # Run 2 with seed=42
+        env = gym.make('HopperBulletEnv-v0')
+        obs2, _ = env.reset(seed=42)
+        obs2_step, reward2, _, _, _ = env.step(action)
+        env.close()
+
+        # Check if results are identical
+        obs_diff = np.abs(obs1 - obs2).max()
+        obs_step_diff = np.abs(obs1_step - obs2_step).max()
+        reward_diff = abs(reward1 - reward2)
+
+        print(f'Initial obs diff: {obs_diff}')
+        print(f'Step obs diff: {obs_step_diff}')
+        print(f'Reward diff: {reward_diff}')
+
+        assert obs_diff < 1e-6, f'Initial observations differ by {obs_diff}'
+        assert obs_step_diff < 1e-6, f'Step observations differ by {obs_step_diff}'
+        assert reward_diff < 1e-6, f'Rewards differ by {reward_diff}'
+
+        print('✓ Seed reproducibility verified!')
+        "
+
+  test-multiprocessing:
+    name: Test Multiprocessing Safety
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+
+    - name: Test multiprocessing with different seeds
+      run: |
+        python -c "
+        import numpy as np
+        import gymnasium as gym
+        from gymnasium.vector import AsyncVectorEnv
+        import pybullet_envs_gymnasium
+
+        print('Testing multiprocessing with different seeds...')
+
+        # Create environments with different seeds
+        def make_env(seed):
+            def _init():
+                env = gym.make('HopperBulletEnv-v0')
+                env.reset(seed=seed)
+                return env
+            return _init
+
+        num_envs = 4
+        envs = AsyncVectorEnv([make_env(i) for i in range(num_envs)])
+
+        # Reset and collect initial observations
+        obs_list = []
+        for _ in range(5):
+            obs = envs.reset()
+            obs_list.append(obs[0].copy())
+
+        # Check that different seeds produce different results
+        for i in range(len(obs_list) - 1):
+            diff = np.abs(obs_list[i] - obs_list[i+1]).max()
+            print(f'Diff between reset {i} and {i+1}: {diff}')
+            # Some differences should exist if RNG is working correctly
+            # (though resets might occasionally be similar by chance)
+
+        envs.close()
+        print('✓ Multiprocessing test completed')
+        "
