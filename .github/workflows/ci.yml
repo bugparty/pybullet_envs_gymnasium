@@ -53,3 +53,12 @@ jobs:
       - name: Test with pytest
         run: |
           make pytest
+      - name: Test HopperBulletEnv-v0 functionality
+        run: |
+          python test_hopper.py
+      - name: Test AsyncVectorEnv compatibility
+        run: |
+          python test_async_env.py
+      - name: Run diagnostic tests
+        run: |
+          python diagnose_hopper.py
